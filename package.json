@@ -1,0 +1,46 @@
+{
+  "name": "elpriser-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for Danish electricity prices (elpriser.org) — current spot price, cheapest hours, and 7-day forecast for DK1 and DK2.",
+  "type": "module",
+  "bin": {
+    "elpriser-mcp": "index.js"
+  },
+  "files": [
+    "index.js"
+  ],
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.4.0",
+    "zod": "^3.23.8"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "elpriser",
+    "electricity-prices",
+    "spotpris",
+    "denmark",
+    "dk1",
+    "dk2",
+    "energidataservice",
+    "claude",
+    "llm"
+  ],
+  "homepage": "https://elpriser.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/x2q/elpriser-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/x2q/elpriser-mcp/issues"
+  },
+  "author": "elpriser.org",
+  "license": "MIT"
+}

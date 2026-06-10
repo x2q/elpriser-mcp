@@ -1,6 +1,7 @@
 {
   "name": "elpriser-mcp",
   "version": "1.0.0",
+  "mcpName": "io.github.x2q/elpriser-mcp",
   "description": "MCP server for Danish electricity prices (elpriser.org) — current spot price, cheapest hours, and 7-day forecast for DK1 and DK2.",
   "type": "module",
   "bin": {

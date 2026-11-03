@@ -9,7 +9,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import assert from 'node:assert/strict';
 
-const EXPECTED = ['get_current_price', 'get_today_prices', 'get_cheapest_hours', 'get_price_forecast', 'find_net_company'];
+const EXPECTED = ['get_current_price', 'get_today_prices', 'get_cheapest_hours', 'get_price_forecast', 'get_european_prices', 'find_net_company'];
 let pass = 0, fail = 0;
 const ok = (n) => { console.log(`  ✅ ${n}`); pass++; };
 const no = (n, e) => { console.log(`  ❌ ${n}\n     └─ ${(e.message || e).split('\n')[0]}`); fail++; };
@@ -46,6 +46,8 @@ try {
     ['get_today_prices', { area: 'DK2', mode: 'spot_inkl' }, /Elpriser DK2/i],
     ['get_cheapest_hours', { area: 'DK1', hours: 4 }, /billigste/i],
     ['get_price_forecast', { area: 'DK1' }, /prognose/i],
+    ['get_european_prices', { zone: 'de' }, /Spotpriser DE/],
+    ['get_european_prices', { zone: 'gb' }, /Spotpriser GB/],
     ['find_net_company', { lat: 56.179, lng: 10.187 }, /Netselskab|Kunne ikke/i],
   ]) {
     try {

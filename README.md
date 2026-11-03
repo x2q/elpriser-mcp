@@ -1,6 +1,6 @@
 # elpriser-mcp
 
-> MCP server for **Danish electricity prices** — current spot price, cheapest hours, and a 7-day forecast for DK1 and DK2, straight from [elpriser.org](https://elpriser.org).
+> MCP server for **electricity prices** — Denmark (DK1/DK2, with grid tariffs) and spot prices for 40 European zones: current price, cheapest hours and forecast, straight from [elpriser.org](https://elpriser.org).
 
 A [Model Context Protocol](https://modelcontextprotocol.io) server that lets an LLM
 (Claude Desktop, etc.) answer questions like:
@@ -9,6 +9,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server that lets an 
 - *"Hvornår er strøm billigst i morgen?"* — find the cheapest hours to charge the EV / run the heat pump
 - *"Vis elpriser i dag time for time for DK2"*
 - *"Hvordan ser elprisprognosen ud de næste 7 dage?"*
+- *"What is the electricity price in Germany / Spain / Norway (NO2) today?"*
 
 Data comes from the free, public [elpriser.org](https://elpriser.org) API, which is
 sourced from **Energi Data Service** (Energinet) / **Nord Pool**. Prices can be the
@@ -23,9 +24,10 @@ transmission tariffs, electricity tax and 25% VAT). **No API key required.**
 | `get_today_prices` | All 24 hourly prices for a date |
 | `get_cheapest_hours` | The N cheapest hours of the day (EV/heat-pump scheduling) |
 | `get_price_forecast` | 7-day forecast (actual for today/tomorrow, estimate beyond) |
+| `get_european_prices` | Hourly spot prices (EUR/MWh, no VAT or taxes) for 40 European zones: Nordics, NL, DE, FR, PL, IT-North, AT, BE, CH, CZ, HU, SI, ES, PT, SK, GR, RO, BG, HR, RS, Baltics, ME, MK, AL, IE, GB, XK — with the forecast days where elpriser.org has one |
 | `find_net_company` | Net company (netselskab) for a lat/lng — for exact total price |
 
-All tools take an `area` (`DK1` or `DK2`, default `DK1`) and most take a `mode`:
+The Danish tools take an `area` (`DK1` or `DK2`, default `DK1`) and most take a `mode`:
 
 - `spot_ex` — raw spot price, no VAT
 - `spot_inkl` — spot price incl. 25% VAT

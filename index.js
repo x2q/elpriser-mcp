@@ -5,7 +5,8 @@
  * Thin wrapper around the free, public elpriser.org JSON API. Lets an LLM
  * (Claude Desktop, etc.) answer questions like "hvad er elprisen lige nu?"
  * or "hvornår er strøm billigst i morgen?" with live data for the Danish
- * price zones DK1 (Vestdanmark) and DK2 (Østdanmark).
+ * price zones DK1 (Vestdanmark) and DK2 (Østdanmark), and with spot prices
+ * for Norway, Sweden, Finland, the Netherlands and most of Europe (get_european_prices).
  *
  * Data source: elpriser.org → Energi Data Service (Energinet) / Nord Pool.
  * No API key required.
@@ -16,7 +17,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod';
 
 const API = process.env.ELPRISER_API_BASE || 'https://elpriser.org';
-const UA = 'elpriser-mcp/1.0 (+https://elpriser.org)';
+const UA = 'elpriser-mcp/1.1 (+https://elpriser.org)';
 
 const AREA = z.enum(['DK1', 'DK2']).default('DK1')
   .describe('Danish price zone: DK1 = Vestdanmark (Jylland og Fyn), DK2 = Østdanmark (Sjælland, Lolland-Falster, Bornholm).');
@@ -34,7 +35,7 @@ async function apiGet(path) {
 const text = (s) => ({ content: [{ type: 'text', text: typeof s === 'string' ? s : JSON.stringify(s, null, 2) }] });
 const fail = (e) => ({ isError: true, content: [{ type: 'text', text: `Fejl: ${e.message || e}` }] });
 
-const server = new McpServer({ name: 'elpriser-mcp', version: '1.0.0' });
+const server = new McpServer({ name: 'elpriser-mcp', version: '1.1.0' });
 
 // ── get_current_price ────────────────────────────────────────────────────────
 server.tool(
@@ -101,6 +102,31 @@ server.tool(
         return `${day.date} (${day.type}): snit ${f(avg)} · lav ${f(min)} · høj ${f(max)} kr/kWh`;
       }).join('\n');
       return text(`7-dages prognose ${area} (${mode}):\n${days}`);
+    } catch (e) { return fail(e); }
+  }
+);
+
+// ── get_european_prices ──────────────────────────────────────────────────────
+const ZONES = ['dk1', 'dk2', 'no1', 'no2', 'no3', 'no4', 'no5', 'se1', 'se2', 'se3', 'se4', 'fi', 'nl',
+  'de', 'fr', 'pl', 'it-n', 'at', 'be', 'ch', 'cz', 'hu', 'si', 'es', 'pt', 'sk', 'gr', 'ro', 'bg', 'hr', 'rs',
+  'ee', 'lv', 'lt', 'me', 'mk', 'al', 'ie', 'gb', 'xk'];
+server.tool(
+  'get_european_prices',
+  'Get spot electricity prices (day-ahead, hourly) for any of 40 European bidding zones: Norway NO1-NO5, Sweden SE1-SE4, Finland, the Netherlands, Germany (de), France, Poland, Northern Italy (it-n), Austria, Belgium, Switzerland, Czechia, Hungary, Slovenia, Spain, Portugal, Slovakia, Greece, Romania, Bulgaria, Croatia, Serbia, Estonia, Latvia, Lithuania, Montenegro, North Macedonia, Albania, Ireland (ie), Kosovo (xk), Great Britain (gb) and Denmark (dk1, dk2). Prices are in EUR/MWh without VAT, taxes or grid fees (Poland and Great Britain also give the local currency in zoneInfo; gb is the within-day Market Index Price in GBP/MWh, not a day-ahead price). Days of type "forecast" are elpriser.org\'s own statistical estimate, not an official forecast. Use for "what is the electricity price in Germany / Spain / Norway today".',
+  { zone: z.enum(ZONES).describe('Bidding zone key, e.g. de, fr, es, no1, se3, it-n, gb.') },
+  async ({ zone }) => {
+    try {
+      const d = await apiGet(`/api/nordic?zone=${zone}`);
+      const f = v => v == null ? '—' : (Math.round(v * 10) / 10).toString();
+      const days = (d.days || []).map(day => {
+        const vals = (day.prices || []).map(p => p.eur_mwh).filter(p => p != null);
+        const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        const hrs = (day.prices || []).filter(p => p.eur_mwh != null);
+        const lo = hrs.length ? hrs.reduce((a, b) => (b.eur_mwh < a.eur_mwh ? b : a)) : null;
+        return `${day.date} (${day.type}${day.horizon ? ` D+${day.horizon}` : ''}): snit ${f(avg)} · billigste time ${lo ? String(lo.hour).padStart(2, '0') + ':00 ' + f(lo.eur_mwh) : '—'} · ${vals.length} timer`;
+      }).join('\n');
+      const unit = d.unit || 'EUR/MWh';
+      return text(`Spotpriser ${zone.toUpperCase()} (${unit}, uden moms, afgifter og nettarif):\n${days}\n\nFuld timeserie: ${API}/api/nordic?zone=${zone}`);
     } catch (e) { return fail(e); }
   }
 );
